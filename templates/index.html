@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Women Safety App</title>
+  
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css')}}"/>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Sign In / Sign Up Form -->
+    <div id="auth-section">
+      <h2>Welcome to SafeZone</h2>
+      <input type="text" id="username" placeholder="Enter your name" />
+      <input type="email" id="email" placeholder="Enter email" />
+      <input type="password" id="password" placeholder="Enter password" />
+      <button onclick="login()">Login / Sign Up</button>
+    </div>
+
+    <!-- Contact Form -->
+    <div id="contacts-section" class="hidden">
+      <h2>Add Trusted Contacts</h2>
+      <div id="contact-list">
+        <input type="tel" placeholder="Contact phone"  class="contact-phone"/>
+      </div>
+      <button onclick="addContact()">Add Another Contact</button>
+      <button onclick="goToDashboard()">Continue</button>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard-section" class="hidden">
+      <h2>Welcome, <span id="userNameDisplay"></span></h2>
+      <button class="emergency-btn" onclick="sendAlert()">🚨 EMERGENCY 🚨</button>
+      <p id="alert-status"></p>
+    </div>
+
+    <!-- Tracker Page -->
+    <div id="tracker-section" class="hidden">
+      <h2>Real-Time Tracker</h2>
+      <p id="location-display">Getting location...</p>
+      <div id="map-placeholder">Map will load here</div>
+    </div>
+    
+  </div>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  
+</body>
+</html>
