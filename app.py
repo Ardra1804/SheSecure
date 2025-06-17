@@ -4,8 +4,9 @@ from twilio.rest import Client
 import os
 from datetime import datetime
 from dotenv import load_dotenv
-load_dotenv()
+import sqlite3
 
+load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -17,9 +18,62 @@ twilio_token = os.environ.get("TWILIO_TOKEN")
 twilio_number = os.environ.get("TWILIO_PHONE")
 twilio_client = Client(twilio_sid, twilio_token)
 
+# ----------------------------
+# DATABASE SETUP
+# ----------------------------
+def init_db():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            email TEXT UNIQUE,
+            password TEXT
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            phone TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# ----------------------------
+# ROUTES
+# ----------------------------
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/register_user', methods=['POST'])
+def register_user():
+    data = request.get_json()
+    name = data.get('name')
+    email = data.get('email')
+    password = data.get('password')
+    contacts = data.get('contacts', [])
+
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+
+    try:
+        c.execute('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', (name, email, password))
+        user_id = c.lastrowid
+        for phone in contacts:
+            c.execute('INSERT INTO contacts (user_id, phone) VALUES (?, ?)', (user_id, phone))
+        conn.commit()
+        return jsonify({'status': 'registered'})
+    except sqlite3.IntegrityError:
+        return jsonify({'status': 'email_exists'}), 400
+    finally:
+        conn.close()
 
 @app.route('/send_alert', methods=['POST'])
 def send_alert():

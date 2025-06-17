@@ -1,6 +1,7 @@
-const socket = io();
+const socket = io();  // Connect to Flask-SocketIO
 let userName = "";
 
+// Handle login/signup
 function login() {
   const name = document.getElementById("username").value.trim();
   const email = document.getElementById("email").value.trim();
@@ -17,6 +18,7 @@ function login() {
   document.getElementById("contacts-section").classList.remove("hidden");
 }
 
+// Add contact input dynamically
 function addContact() {
   const contactList = document.getElementById("contact-list");
   const phoneInput = document.createElement("input");
@@ -26,11 +28,35 @@ function addContact() {
   contactList.appendChild(phoneInput);
 }
 
+// Register user and show dashboard
 function goToDashboard() {
-  document.getElementById("contacts-section").classList.add("hidden");
-  document.getElementById("dashboard-section").classList.remove("hidden");
+  const phones = Array.from(document.getElementsByClassName("contact-phone"))
+    .map(input => input.value.trim())
+    .filter(p => p);
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  fetch("/register_user", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: userName,
+      email: email,
+      password: password,
+      contacts: phones,
+    }),
+  }).then(res => {
+    if (res.ok) {
+      document.getElementById("contacts-section").classList.add("hidden");
+      document.getElementById("dashboard-section").classList.remove("hidden");
+    } else {
+      alert("Email already exists!");
+    }
+  });
 }
 
+// Trigger emergency alert
 function sendAlert() {
   if (!navigator.geolocation) {
     alert("Geolocation not supported in your browser.");
@@ -52,11 +78,11 @@ function sendAlert() {
       const lon = position.coords.longitude;
 
       document.getElementById("alert-status").textContent = "Alert sent! SMS and tracking started.";
-
       document.getElementById("dashboard-section").classList.add("hidden");
       document.getElementById("tracker-section").classList.remove("hidden");
 
-      document.getElementById("location-display").textContent = `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
+      document.getElementById("location-display").textContent =
+        `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
 
       fetch("/send_alert", {
         method: "POST",
@@ -75,6 +101,7 @@ function sendAlert() {
   );
 }
 
+// Receive real-time location updates
 socket.on("location_update", (data) => {
   const msg = `${data.username} - Lat: ${data.lat}, Lon: ${data.lon}`;
   document.getElementById("location-display").textContent = msg;
